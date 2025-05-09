@@ -1,0 +1,201 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Interactive DOM Traversal and Manipulation</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      margin: 20px;
+      text-align: center;
+    }
+
+    .controls {
+      margin-bottom: 20px;
+    }
+
+    button {
+      margin: 5px;
+      padding: 10px 15px;
+      font-size: 14px;
+      cursor: pointer;
+    }
+
+    .grandparent {
+      background-color: #ffe0b2;
+      padding: 20px;
+      margin: 10px auto;
+      width: 60%;
+      border: 2px solid #ff9800;
+    }
+
+    .parent {
+      background-color: #c8e6c9;
+      padding: 15px;
+      margin: 10px;
+      border: 2px solid #4caf50;
+    }
+
+    .child {
+      background-color: #bbdefb;
+      padding: 10px;
+      margin: 5px;
+      border: 2px solid #2196f3;
+    }
+
+    .highlight {
+      outline: 3px solid red;
+      background-color: yellow !important;
+    }
+  </style>
+</head>
+<body>
+
+  <h1>Interactive DOM Traversal and Manipulation</h1>
+
+  <div class="controls">
+    <button onclick="traverseUp()">Traverse Up</button>
+    <button onclick="traverseDown()">Traverse Down</button>
+    <button onclick="traverseNextSibling()">Next Sibling</button>
+    <button onclick="traversePreviousSibling()">Previous Sibling</button>
+    <button onclick="addChild()">Add Child</button>
+    <button onclick="deleteNode()">Delete Selected</button>
+  </div>
+
+  <!-- DOM Tree -->
+  <div class="grandparent" onclick="selectNode(event)">
+    Grandparent
+    <div class="parent" onclick="selectNode(event)">
+      Parent 1
+      <div class="child" onclick="selectNode(event)">Child 1.1</div>
+      <div class="child" onclick="selectNode(event)">Child 1.2</div>
+    </div>
+    <div class="parent" onclick="selectNode(event)">
+      Parent 2
+      <div class="child" onclick="selectNode(event)">Child 2.1</div>
+      <div class="child" onclick="selectNode(event)">Child 2.2</div>
+    </div>
+  </div>
+
+  <script>
+    let selectedNode = null;
+
+    // Highlight the clicked node
+    function selectNode(event) {
+      event.stopPropagation(); // Prevent event bubbling
+      if (selectedNode) {
+        selectedNode.classList.remove('highlight');
+      }
+      selectedNode = event.currentTarget;
+      selectedNode.classList.add('highlight');
+    }
+
+    // Move up to parent node
+    function traverseUp() {
+      if (!selectedNode) return alert("Please select a node.");
+      const parent = selectedNode.parentElement.closest('.grandparent, .parent');
+      if (parent) {
+        updateSelection(parent);
+      } else {
+        alert("No parent available.");
+      }
+    }
+
+    // Move down to first child element
+    function traverseDown() {
+      if (!selectedNode) return alert("Please select a node.");
+      const child = selectedNode.querySelector('.parent, .child');
+      if (child) {
+        updateSelection(child);
+      } else {
+        alert("No child available.");
+      }
+    }
+
+    // Move to next sibling
+    function traverseNextSibling() {
+      if (!selectedNode) return alert("Please select a node.");
+      let next = selectedNode.nextElementSibling;
+      while (next && !hasSameType(next)) {
+        next = next.nextElementSibling;
+      }
+      if (next) {
+        updateSelection(next);
+      } else {
+        alert("No next sibling available.");
+      }
+    }
+
+    // Move to previous sibling
+    function traversePreviousSibling() {
+      if (!selectedNode) return alert("Please select a node.");
+      let prev = selectedNode.previousElementSibling;
+      while (prev && !hasSameType(prev)) {
+        prev = prev.previousElementSibling;
+      }
+      if (prev) {
+        updateSelection(prev);
+      } else {
+        alert("No previous sibling available.");
+      }
+    }
+
+    // Add child based on selected node type
+    function addChild() {
+      if (!selectedNode) return alert("Please select a node.");
+      if (selectedNode.classList.contains('grandparent')) {
+        const newParent = document.createElement('div');
+        newParent.className = 'parent';
+        newParent.textContent = 'New Parent';
+        newParent.onclick = selectNode;
+
+        for (let i = 1; i <= 2; i++) {
+          const newChild = document.createElement('div');
+          newChild.className = 'child';
+          newChild.textContent = `Child ${Math.floor(Math.random() * 1000)}`;
+          newChild.onclick = selectNode;
+          newParent.appendChild(newChild);
+        }
+        selectedNode.appendChild(newParent);
+      } else if (selectedNode.classList.contains('parent')) {
+        const newChild = document.createElement('div');
+        newChild.className = 'child';
+        newChild.textContent = `Child ${Math.floor(Math.random() * 1000)}`;
+        newChild.onclick = selectNode;
+        selectedNode.appendChild(newChild);
+      } else {
+        alert("Cannot add child to a child node.");
+      }
+    }
+
+    // Delete selected node with restrictions
+    function deleteNode() {
+      if (!selectedNode) return alert("Please select a node.");
+      if (selectedNode.classList.contains('grandparent')) {
+        return alert("Cannot delete the grandparent node.");
+      }
+      const parent = selectedNode.parentElement;
+      selectedNode.remove();
+      selectedNode = null;
+      if (parent.classList.contains('grandparent') || parent.classList.contains('parent')) {
+        updateSelection(parent);
+      }
+    }
+
+    // Helper: check if sibling is same type (class)
+    function hasSameType(el) {
+      return el.classList.contains('grandparent') ||
+             el.classList.contains('parent') ||
+             el.classList.contains('child');
+    }
+
+    // Update selection to a new node
+    function updateSelection(newNode) {
+      if (selectedNode) selectedNode.classList.remove('highlight');
+      selectedNode = newNode;
+      selectedNode.classList.add('highlight');
+    }
+  </script>
+</body>
+</html>
